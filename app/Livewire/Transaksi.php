@@ -23,11 +23,10 @@ class Transaksi extends Component
         $this->transaksiAktif->total = 0;
         $this->transaksiAktif->status = 'pending';
         $this->transaksiAktif->save();
-
-        
     }
 
-    public function hapusProduk($id){
+    public function hapusProduk($id)
+    {
         $detail = DetailTransaksi::find($id);
         if ($detail) {
             $produk = Produk::find($detail->produk_id);
@@ -72,11 +71,11 @@ class Transaksi extends Component
             session()->flash('error', 'Produk tidak ditemukan atau stok habis!');
         }
     }
-    public function updatedBayar(){
+    public function updatedBayar()
+    {
         if ($this->bayar > 0) {
             $this->kembalian = $this->bayar - $this->totalSemuaBelanja;
         }
-        
     }
 
     public function batalTransaksi()
@@ -94,7 +93,14 @@ class Transaksi extends Component
         $this->reset();
     }
 
-    public function transaksiSelesai(){
+    public function getTransaksiList()
+    {
+        return ModelsTransaksi::latest()->paginate(10);
+    }
+
+
+    public function transaksiSelesai()
+    {
         $this->transaksiAktif->total = $this->totalSemuaBelanja;
         $this->transaksiAktif->status = 'selesai';
         $this->transaksiAktif->save();
@@ -102,16 +108,19 @@ class Transaksi extends Component
     }
     public function render()
     {
+        $produkList = Produk::all();
         if ($this->transaksiAktif) {
             $semuaProduk = DetailTransaksi::where('transaksi_id', $this->transaksiAktif->id)->get();
-            $this->totalSemuaBelanja = $semuaProduk->sum(function ($detail){
+            $this->totalSemuaBelanja = $semuaProduk->sum(function ($detail) {
                 return $detail->produk->harga * $detail->jumlah;
             });
         } else {
             $semuaProduk = [];
         }
         return view('livewire.transaksi')->with([
-            'semuaProduk' => $semuaProduk
+            'produkList' => $produkList,
+            'semuaProduk' => $semuaProduk,
+            'transaksiList' => $this->getTransaksiList()
         ]);
     }
 }
